@@ -125,7 +125,7 @@ inline uint32 getCurrentThreadId()
 #ifdef OS_WIN
 	return GetCurrentThreadId();
 #elif defined(__GNUC__)
-	return pthread_self();
+	return (uint32)pthread_self();
 #endif
 }
 

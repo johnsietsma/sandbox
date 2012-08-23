@@ -6,6 +6,8 @@
 #include "event_trace_plat.h"
 #include "event_trace_impl.h"
 
+#include "ThreadLocalStorage.h"
+
 #include <algorithm>
 #include <string.h>
 #include <assert.h>
@@ -61,7 +63,7 @@ int g_category_index = 3; // skip initial 3 categories
 // The most-recently captured name of the current thread
 //LazyInstance<ThreadLocalPointer<const char> >::Leaky g_current_thread_name = LAZY_INSTANCE_INITIALIZER;
 // Flag to indicate whether we captured the current thread name
-static _tlsVal bool g_current_thread_name_captured;
+static ThreadLocalStorage<bool> g_current_thread_name_captured;
 
 
 void AppendValueAsJSON(unsigned char type,
@@ -241,10 +243,10 @@ void event_trace::TraceEvent::AppendEventsAsJSON(const std::vector<TraceEvent>& 
                                     std::string* out) {
 
 	for (size_t i = 0; i < count && start + i < events.size(); ++i) {
-    if (i > 0)
-      *out += ",";
-    events[i + start].AppendAsJSON(out);
-  }
+        if (i > 0)
+            *out += ",";
+        events[i + start].AppendAsJSON(out);
+    }
 }
 
 void event_trace::TraceEvent::AppendAsJSON(std::string* out) const {
@@ -461,7 +463,7 @@ void event_trace::TraceLog::SetDisabled() {
     excluded_categories_.clear();
     for (int i = 0; i < g_category_index; i++)
       g_category_enabled[i] = 0;
-    AddThreadNameMetadataEvents();
+    //JPS: Crashing AddThreadNameMetadataEvents();
     AddClockSyncMetadataEvents();
   }  // release lock
   Flush();
@@ -510,8 +512,8 @@ void event_trace::TraceLog::BeginLogging()
 void event_trace::TraceLog::EndLogging()
 {
 	event_trace::OutputCallback("]");
+ 	event_trace::TraceLog::GetInstance()->SetEnabled(false);    
 }
-
 
 int event_trace::TraceLog::AddTraceEvent(char phase,
                             const unsigned char* category_enabled,
